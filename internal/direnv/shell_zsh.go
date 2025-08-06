@@ -1,4 +1,4 @@
-package main
+package direnv
 
 // ZSH is a singleton instance of ZSH_T
 type zsh struct{}

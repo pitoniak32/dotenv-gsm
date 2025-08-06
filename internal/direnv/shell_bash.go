@@ -1,4 +1,4 @@
-package main
+package direnv
 
 import "fmt"
 

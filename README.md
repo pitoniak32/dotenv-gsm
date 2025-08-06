@@ -1,23 +1,12 @@
 # Usage
 
-`go build`
+`go build -o bin/`
 
-`~/.config/direnv/direnvrc`:
+`.envrc`:
 ```bash
-#!/bin/bash
+if [ -f .env.secret ]; then
+  dotenv .env.secret
 
-dotenv_gsm() {
-  if ! has /Users/dvd/code/personal/direnv_gsm/direnv_gsm; then
-    echo "please ensure you have direnv_gsm on your PATH"
-  fi
-
-  # load the current env file to cache the values.
-  dotenv $1
-
-  # fetch gsm secrets and update the env values
-  eval "$(/Users/dvd/code/personal/direnv_gsm/direnv_gsm bash $1)"
-
-  # dump and load the current environment into direnv
-  direnv_load direnv dump
-}
+  eval "$(LOG_LEVEL=error /Users/dvd/code/personal/dotenv_gsm/dotenv_gsm bash .env.secret)"
+fi
 ```

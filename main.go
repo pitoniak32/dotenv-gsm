@@ -10,6 +10,8 @@ import (
 	// secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	// "cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 
+	intdirenv "github.com/pitoniak32/dotenv_gsm/internal/direnv"
+
 	"github.com/direnv/direnv/v2/pkg/dotenv"
 )
 
@@ -39,14 +41,14 @@ func main() {
 
 	args := os.Args
 
-	var shell Shell
-	var newenv Env
+	var shell intdirenv.Shell
+	var newenv intdirenv.Env
 	var target string
 
 	if len(args) > 1 {
-		shell = DetectShell(args[1])
+		shell = intdirenv.DetectShell(args[1])
 	} else {
-		shell = Bash
+		shell = intdirenv.Bash
 	}
 
 	if len(args) > 2 {

@@ -1,4 +1,4 @@
-module github.com/pitoniak32/direnv_gsm
+module github.com/pitoniak32/dotenv_gsm
 
 go 1.24
 
