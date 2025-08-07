@@ -1,3 +1,5 @@
 bin/*
 .env.secret
 
+# Added by goreleaser init:
+dist/

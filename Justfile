@@ -1,17 +1,14 @@
-build platform="darwin" arch="arm64":
-  ./hack/build.sh {{platform}} {{arch}}
+build:
+  goreleaser build --snapshot --clean
+  
 
-build-run platform="darwin" arch="arm64":
-  ./hack/build.sh {{platform}} {{arch}}
-  ./bin/dotenv_gsm-{{platform}}-{{arch}} bash .env.secret
+build-run:
+  goreleaser build --snapshot --clean && \
+  ./dist/dotenv_gsm_darwin_arm64_v8.0/dotenv_gsm bash .env.secret
 
 build-all:
   ./hack/build.sh darwin arm64
   ./hack/build.sh linux amd64 
-
-# Run the entry point
-run:
-  go run . bash .env.secret
 
 # Test all packages
 test flags="": 

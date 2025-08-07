@@ -12,3 +12,9 @@ if [ -f .env.secret ]; then
   fi
 fi
 ```
+
+## Thank yous
+
+Thank you `direnv` for such an amazing developer experience!
+
+Thank you `goreleaser` for making the release process not painful!
