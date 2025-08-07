@@ -1,16 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
-	// secretmanager "cloud.google.com/go/secretmanager/apiv1"
-	// "cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 
 	intdirenv "github.com/pitoniak32/dotenv_gsm/internal/direnv"
+	"github.com/pitoniak32/dotenv_gsm/internal/version"
 
 	"github.com/direnv/direnv/v2/pkg/dotenv"
 )
@@ -39,11 +42,18 @@ func main() {
 		),
 	)
 
+	slog.Debug("version info", "details", version.VersionInfo)
+
 	args := os.Args
 
 	var shell intdirenv.Shell
 	var newenv intdirenv.Env
 	var target string
+
+	if len(args) == 2 && (args[1] == "--version" || args[1] == "version") {
+		fmt.Println(fmt.Sprintf("%#+v", version.VersionInfo))
+		os.Exit(0)
+	}
 
 	if len(args) > 1 {
 		shell = intdirenv.DetectShell(args[1])
@@ -83,11 +93,13 @@ func main() {
 	}
 
 	for key, value := range newenv {
-		if strings.Contains(value, "projects/") {
-			slog.Warn("mock fetching gsm secret", "key", key, "value", value)
-			newenv[key] = "***"
+		if !strings.Contains(value, "projects/") {
+			slog.Error("found non GSM secretId value... ensure you only use gsm paths in this file... exiting", "key", key, "value", value)
+			os.Exit(1)
 		}
 	}
+
+	fetchSecrets(newenv)
 
 	str, err := newenv.ToShell(shell)
 	if err != nil {
@@ -96,4 +108,61 @@ func main() {
 	}
 
 	fmt.Println(str)
+}
+
+func fetchSecrets(secrets intdirenv.Env) (intdirenv.Env, error) {
+	ctx := context.Background()
+
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		slog.Error("failed to create secret manager client: %v", err)
+		os.Exit(1)
+	}
+	defer client.Close()
+
+	type SecretResult struct {
+		Key      string
+		SecretId string
+		Value    string
+		Error    error
+	}
+
+	results := make(chan SecretResult, len(secrets))
+	var wg sync.WaitGroup
+
+	for key, secretId := range secrets {
+		wg.Add(1)
+		go func(secretId string) {
+			defer wg.Done()
+			if !strings.Contains(secretId, "versions/") {
+				slog.Debug("adding '/versions/latest' to secret", "key", key, "secretId", secretId)
+				secretId = fmt.Sprintf("%s/versions/latest", secretId)
+			}
+			req := &secretmanagerpb.AccessSecretVersionRequest{Name: secretId}
+
+			slog.Debug("fetching gsm secret", "key", key, "secretId", secretId)
+			result, err := client.AccessSecretVersion(ctx, req)
+			if err != nil {
+				results <- SecretResult{Key: key, SecretId: secretId, Value: "", Error: err}
+				return
+			}
+
+			secretData := string(result.Payload.Data)
+			results <- SecretResult{Key: key, SecretId: secretId, Value: secretData}
+		}(secretId)
+	}
+
+	wg.Wait()
+	close(results)
+
+	for res := range results {
+		if res.Error != nil {
+			slog.Error("accessing secret failed", "key", res.Key, "secretId", res.SecretId, "err", res.Error)
+		} else {
+			slog.Debug("setting secret", "key", res.Key, "secretId", res.SecretId)
+			secrets[res.Key] = res.Value
+		}
+	}
+
+	return secrets, nil
 }
