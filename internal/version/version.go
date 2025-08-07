@@ -5,19 +5,19 @@ import (
 )
 
 type AppVersionInfo struct {
+	Version   string `json:"version"`
+	Commit    string `json:"commit"`
+	Name      string `json:"name"`
 	Arch      string `json:"arch"`
 	Os        string `json:"os"`
 	GoVersion string `json:"go_version"`
-	Name      string `json:"name"`
-	Version   string `json:"version"`
-	Commit    string `json:"commit"`
 	BuildDate string `json:"build_date"`
 }
 
 var (
-	version     = "v0.0.0"
-	commit      = "dirty"
-	buildDate   = "1970-01-01T00:00:00Z"
+	version     = "UNKNOWN"
+	commit      = "UNKNOWN"
+	buildDate   = "UNKNOWN"
 	VersionInfo AppVersionInfo
 )
 
