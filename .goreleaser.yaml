@@ -22,16 +22,18 @@ builds:
       - "-X {{.ModulePath}}/internal/version.commit={{.ShortCommit}}"
       - "-X {{.ModulePath}}/internal/version.buildDate={{.Date}}"
       - "-X {{.ModulePath}}/internal/version.version={{.Version}}"
+    goarch:
+      - amd64
+      - arm64
     goos:
       - linux
       - darwin
 
 archives:
-  - formats: [binary]
-    # this name template makes the OS and Arch compatible with the results of `uname`.
+  - formats: [tgz]
     name_template: >-
       {{ .ProjectName }}_
-      {{- title .Os }}_
+      {{- .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}

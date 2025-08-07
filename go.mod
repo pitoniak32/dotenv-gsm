@@ -6,6 +6,7 @@ toolchain go1.24.5
 
 require (
 	cloud.google.com/go/secretmanager v1.15.0
+	github.com/cbrewster/slog-env v0.1.1
 	github.com/direnv/direnv/v2 v2.37.1
 )
 

@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	slogenv "github.com/cbrewster/slog-env"
+	"log/slog"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
@@ -18,29 +20,9 @@ import (
 	"github.com/direnv/direnv/v2/pkg/dotenv"
 )
 
-func parseLogLevel(env string) slog.Level {
-	switch strings.ToLower(env) {
-	case "debug":
-		return slog.LevelDebug
-	case "info":
-		return slog.LevelInfo
-	case "warn", "warning":
-		return slog.LevelWarn
-	case "error":
-		return slog.LevelError
-	default:
-		return slog.LevelWarn // fallback default
-	}
-}
-
 func main() {
-	slog.SetDefault(
-		slog.New(
-			slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-				Level: parseLogLevel(os.Getenv("LOG_LEVEL")),
-			}),
-		),
-	)
+
+	slog.SetDefault(slog.New(slogenv.NewHandler(slog.NewTextHandler(os.Stderr, nil), slogenv.WithEnvVarName("LOG_LEVEL"))))
 
 	slog.Debug("version info", "details", version.VersionInfo)
 
@@ -115,7 +97,7 @@ func fetchSecrets(secrets intdirenv.Env) (intdirenv.Env, error) {
 
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
-		slog.Error("failed to create secret manager client: %v", err)
+		slog.Error("failed to create secret manager client: %v", "err", err)
 		os.Exit(1)
 	}
 	defer client.Close()

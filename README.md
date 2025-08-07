@@ -1,6 +1,6 @@
 # Usage
 
-`go build -o bin/` (or somewhere on your path)
+`goreleaser build --clean --snapshot`
 
 `.envrc`:
 ```bash
