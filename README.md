@@ -41,8 +41,8 @@ dotenv_gsm() {
 # If you want to do a similar pattern to this project you can use this example
 .env*
 !.env/
-!.env/.gsm
-!.env/.non-secret
+!.env/.env.gsm
+!.env/.env.non-secret
 ```
 
 Create a `.env.gsm` file with your secret paths:
