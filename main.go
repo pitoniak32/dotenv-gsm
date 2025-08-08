@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
-	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -13,66 +14,38 @@ import (
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
-
-	intdirenv "github.com/pitoniak32/dotenv_gsm/internal/direnv"
-	"github.com/pitoniak32/dotenv_gsm/internal/version"
-
-	"github.com/direnv/direnv/v2/pkg/dotenv"
 )
 
 func main() {
 
 	slog.SetDefault(slog.New(slogenv.NewHandler(slog.NewTextHandler(os.Stderr, nil), slogenv.WithEnvVarName("LOG_LEVEL"))))
 
-	slog.Debug("version info", "details", version.VersionInfo)
+	slog.Debug("version info", "details", VersionInfo)
 
-	args := os.Args
-
-	var shell intdirenv.Shell
-	var newenv intdirenv.Env
-	var target string
-
-	if len(args) == 2 && (args[1] == "--version" || args[1] == "version") {
-		fmt.Println(fmt.Sprintf("%#+v", version.VersionInfo))
+	if len(os.Args) == 2 && (os.Args[1] == "--version" || os.Args[1] == "version") {
+		fmt.Println(fmt.Sprintf("%#+v", VersionInfo))
 		os.Exit(0)
 	}
 
-	if len(args) > 1 {
-		shell = intdirenv.DetectShell(args[1])
+	var environmentString string
+
+	if len(os.Args) > 1 && os.Args[1] == "-" {
+		slog.Debug("reading input from stdin")
+		environmentBytes, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			slog.Error("encountered error reading stdin", "err", err)
+			os.Exit(1)
+		}
+		environmentString = string(environmentBytes)
+	} else if len(os.Args) > 1 {
+		slog.Debug("reading input from first arg")
+		environmentString = os.Args[1]
 	} else {
-		shell = intdirenv.Bash
+		fmt.Fprintln(os.Stderr, "Usage: direnv_gsm [-|<exports string>]")
+		return
 	}
 
-	if len(args) > 2 {
-		target = args[2]
-	}
-
-	var data []byte
-	data, err := os.ReadFile(target)
-	if err != nil {
-		slog.Error("reading env file failed", "file", target, "err", err)
-		os.Exit(1)
-	}
-
-	// Set PWD env var to the directory the .env file resides in. This results
-	// in the least amount of surprise, as a dotenv file is most often defined
-	// in the same directory it's loaded from, so referring to PWD should match
-	// the directory of the .env file.
-	path, err := filepath.Abs(target)
-	if err != nil {
-		slog.Error("finding absolute directory of env file failed", "file", target, "err", err)
-		os.Exit(1)
-	}
-	if err := os.Setenv("PWD", filepath.Dir(path)); err != nil {
-		slog.Error("finding pwd of env file failed", "path", path, "err", err)
-		os.Exit(1)
-	}
-
-	newenv, err = dotenv.Parse(string(data))
-	if err != nil {
-		slog.Error("parsing env file failed", "path", path, "err", err)
-		os.Exit(1)
-	}
+	newenv := parseExportString(string(environmentString))
 
 	for key, value := range newenv {
 		if !strings.Contains(value, "projects/") {
@@ -81,18 +54,32 @@ func main() {
 		}
 	}
 
-	fetchSecrets(newenv)
-
-	str, err := newenv.ToShell(shell)
-	if err != nil {
-		slog.Error("creating environment for shell failed", "shell", shell.Name(), "path", path, "err", err)
-		os.Exit(1)
+	for key, value := range fetchSecrets(newenv) {
+		environmentString = strings.ReplaceAll(environmentString, key, value)
+		slog.Debug("replaced all instances of key with secret value", "key", key, "environmentString", environmentString)
 	}
 
-	fmt.Println(str)
+	fmt.Println(environmentString)
 }
 
-func fetchSecrets(secrets intdirenv.Env) (intdirenv.Env, error) {
+type Env = map[string]string
+
+func parseExportString(input string) Env {
+	// Regex to match: export KEY=$'VALUE';
+	re := regexp.MustCompile(`export\s+(\w+)=\$'([^']*)';`)
+	matches := re.FindAllStringSubmatch(input, -1)
+
+	result := make(map[string]string)
+	for _, match := range matches {
+		if len(match) == 3 {
+			value := match[2]
+			result[value] = value
+		}
+	}
+	return result
+}
+
+func fetchSecrets(secrets Env) Env {
 	ctx := context.Background()
 
 	client, err := secretmanager.NewClient(ctx)
@@ -146,5 +133,5 @@ func fetchSecrets(secrets intdirenv.Env) (intdirenv.Env, error) {
 		}
 	}
 
-	return secrets, nil
+	return secrets
 }

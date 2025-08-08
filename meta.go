@@ -1,4 +1,4 @@
-package version
+package main
 
 import (
 	"runtime"
@@ -26,7 +26,7 @@ func init() {
 		Arch:      runtime.GOARCH,
 		Os:        runtime.GOOS,
 		GoVersion: runtime.Version(),
-		Name:      "dotenv_gsm",
+		Name:      "dotenv-gsm",
 		Version:   version,
 		Commit:    commit,
 		BuildDate: buildDate,

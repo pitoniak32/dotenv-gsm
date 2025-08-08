@@ -4,7 +4,7 @@ build:
 
 build-run:
   goreleaser build --snapshot --clean && \
-  ./dist/dotenv_gsm_darwin_arm64_v8.0/dotenv_gsm bash .env.secret
+  echo "export TESTING=$'projects/test/secrets/testing';export TEST=$'projects/test/secrets/test/versions/1';" | ./dist/dotenv-gsm_darwin_arm64_v8.0/dotenv-gsm -
 
 build-all:
   ./hack/build.sh darwin arm64

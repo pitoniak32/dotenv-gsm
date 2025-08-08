@@ -12,9 +12,9 @@ builds:
   - env:
       - CGO_ENABLED=0
     ldflags:
-      - "-X {{.ModulePath}}/internal/version.commit={{.ShortCommit}}"
-      - "-X {{.ModulePath}}/internal/version.buildDate={{.Date}}"
-      - "-X {{.ModulePath}}/internal/version.version={{.Version}}"
+      - "-X main.commit={{.ShortCommit}}"
+      - "-X main.buildDate={{.Date}}"
+      - "-X main.version={{.Version}}"
     goarch:
       - amd64
       - arm64
