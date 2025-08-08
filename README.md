@@ -12,7 +12,7 @@ Add `dotenv-gsm` to your `PATH` (***NOTE: there's a difference between `dotenv-g
 
 Add a helper function either to `~/.config/direnv/direnvrc`, or your `.envrc`:
 ```bash
-# Usage: dotenv_gsm [<dotenv>]
+# Usage: dotenv-gsm [<dotenv>]
 #
 # Loads a ".env.gsm" file and fetches values from Google Secret Manager
 dotenv_gsm() {
@@ -69,3 +69,4 @@ value-from-gsm-secret!
 
 - [direnv](https://github.com/direnv/direnv): Thank you `direnv` for such an amazing developer experience!
 - [goreleaser](https://github.com/goreleaser/goreleaser): Thank you `goreleaser` for making the release process a pleasure!
+

@@ -37,11 +37,11 @@ func main() {
 			os.Exit(1)
 		}
 		environmentString = string(environmentBytes)
-	} else if len(os.Args) > 1 {
+	} else if len(os.Args) > 1 && strings.Contains(os.Args[1], "export ") {
 		slog.Debug("reading input from first arg")
 		environmentString = os.Args[1]
 	} else {
-		fmt.Fprintln(os.Stderr, "Usage: direnv_gsm [-|<exports string>]")
+		fmt.Fprintln(os.Stderr, "Usage: direnv-gsm [ - | <exports string> ]")
 		return
 	}
 
