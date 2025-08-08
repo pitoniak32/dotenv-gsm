@@ -1,9 +1,7 @@
 .env*
+!.env/
 !.env/.env.gsm
-!.env/.env.secret
 !.env/.env.non-secret
-
-bin/*
 
 # Added by goreleaser init:
 dist/
