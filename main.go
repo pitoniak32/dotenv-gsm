@@ -56,7 +56,7 @@ func main() {
 
 	for key, value := range fetchSecrets(newenv) {
 		environmentString = strings.ReplaceAll(environmentString, key, value)
-		slog.Debug("replaced all instances of key with secret value", "key", key, "environmentString", environmentString)
+		slog.Debug("replaced all instances of key with secret value", "key", key)
 	}
 
 	fmt.Println(environmentString)
@@ -135,3 +135,4 @@ func fetchSecrets(secrets Env) Env {
 
 	return secrets
 }
+
