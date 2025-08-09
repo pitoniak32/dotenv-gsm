@@ -40,6 +40,7 @@ dotenv_gsm() {
 ```bash
 # If you want to do a similar pattern to this project you can use this example
 .env*
+!.envrc
 !.env/
 !.env/.env.gsm
 !.env/.env.non-secret
